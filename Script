@@ -1,3 +1,4 @@
+-- Roblox ESP Script - FIRE.EXE
 -- Created for educational purposes
 
 local Players = game:GetService("Players")
@@ -6,30 +7,115 @@ local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- Valid keys for the key system
-local validKeys = {
-    "FIRE-PRIVATE-2025",
-    "TESTKEY123",
-    "1"
-}
+-- ═══════════════════════════════════════════════════════════════
+-- WEB API KEY SYSTEM (Cloudflare Workers)
+-- ═══════════════════════════════════════════════════════════════
 
--- Function to check if key is valid
-local function isValidKey(key)
-    for _, validKey in ipairs(validKeys) do
-        if key == validKey then
-            return true
-        end
-    end
-    return false
+-- SETUP: Replace with your Cloudflare Worker URL
+local API_URL = "https://fire-key-system.jacobml266.workers.dev"
+
+-- Get HWID (hardware ID for locking)
+local function GetHWID()
+    local hwid = game:GetService("RbxAnalyticsService"):GetClientId()
+    return hwid
 end
 
--- Create Loader GUI (SKECH Style)
+-- Validate key with API
+local function ValidateKey(key)
+    print("[FIRE.EXE] Validating key with API...")
+    
+    local success, result = pcall(function()
+        local hwid = GetHWID()
+        
+        local body = game:GetService("HttpService"):JSONEncode({
+            key = key,
+            hwid = hwid
+        })
+        
+        local response
+        
+        -- Method 1: Try game:HttpPost (most compatible)
+        local s1, r1 = pcall(function()
+            return game:HttpPost(game, API_URL .. "/validate", body, "application/json")
+        end)
+        
+        if s1 and r1 then
+            return game:GetService("HttpService"):JSONDecode(r1)
+        end
+        
+        -- Method 2: Try request()
+        if request then
+            local s2, r2 = pcall(function()
+                return request({
+                    Url = API_URL .. "/validate",
+                    Method = "POST",
+                    Headers = {
+                        ["Content-Type"] = "application/json"
+                    },
+                    Body = body
+                })
+            end)
+            
+            if s2 and r2 and r2.Body then
+                return game:GetService("HttpService"):JSONDecode(r2.Body)
+            end
+        end
+        
+        -- Method 3: Try syn.request
+        if syn and syn.request then
+            local s3, r3 = pcall(function()
+                return syn.request({
+                    Url = API_URL .. "/validate",
+                    Method = "POST",
+                    Headers = {
+                        ["Content-Type"] = "application/json"
+                    },
+                    Body = body
+                })
+            end)
+            
+            if s3 and r3 and r3.Body then
+                return game:GetService("HttpService"):JSONDecode(r3.Body)
+            end
+        end
+        
+        return nil
+    end)
+    
+    if success and result then
+        print("[FIRE.EXE] API Response: " .. game:GetService("HttpService"):JSONEncode(result))
+        return result.valid == true, result.message or "Unknown error"
+    else
+        warn("[FIRE.EXE] Validation error: " .. tostring(result))
+        return false, "Failed to connect to server"
+    end
+end
+
+print("[FIRE.EXE] Web API Key System initialized")
+print("[FIRE.EXE] API URL: " .. API_URL)
+
+-- Local key storage
+local SavedKeyFile = "FIRE_SavedKey.txt"
+
+local function SaveKey(key)
+    if writefile then
+        writefile(SavedKeyFile, key)
+    end
+end
+
+local function LoadSavedKey()
+    if isfile and readfile and isfile(SavedKeyFile) then
+        return readfile(SavedKeyFile)
+    end
+    return nil
+end
+
+-- Create Loader GUI (FIRE.EXE Style)
 local LoaderGui = Instance.new("ScreenGui")
 LoaderGui.Name = "LoaderGui"
 LoaderGui.ResetOnSpawn = false
 LoaderGui.Parent = game.CoreGui
 
--- Loader background (semi-transparent overlay)
 local LoaderBackground = Instance.new("Frame")
 LoaderBackground.Name = "LoaderBackground"
 LoaderBackground.Size = UDim2.new(1, 0, 1, 0)
@@ -39,11 +125,10 @@ LoaderBackground.BackgroundTransparency = 0.3
 LoaderBackground.BorderSizePixel = 0
 LoaderBackground.Parent = LoaderGui
 
--- Loader Frame
 local LoaderFrame = Instance.new("Frame")
 LoaderFrame.Name = "LoaderFrame"
-LoaderFrame.Size = UDim2.new(0, 400, 0, 280)
-LoaderFrame.Position = UDim2.new(0.5, -200, 0.5, -140)
+LoaderFrame.Size = UDim2.new(0, 400, 0, 260)
+LoaderFrame.Position = UDim2.new(0.5, -200, 0.5, -130)
 LoaderFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
 LoaderFrame.BorderSizePixel = 0
 LoaderFrame.Parent = LoaderBackground
@@ -52,7 +137,6 @@ local LoaderCorner = Instance.new("UICorner")
 LoaderCorner.CornerRadius = UDim.new(0, 10)
 LoaderCorner.Parent = LoaderFrame
 
--- Title
 local LoaderTitle = Instance.new("TextLabel")
 LoaderTitle.Name = "Title"
 LoaderTitle.Size = UDim2.new(1, -40, 0, 50)
@@ -65,7 +149,6 @@ LoaderTitle.Font = Enum.Font.GothamBold
 LoaderTitle.TextXAlignment = Enum.TextXAlignment.Center
 LoaderTitle.Parent = LoaderFrame
 
--- Subtitle
 local LoaderSubtitle = Instance.new("TextLabel")
 LoaderSubtitle.Name = "Subtitle"
 LoaderSubtitle.Size = UDim2.new(1, -40, 0, 30)
@@ -78,7 +161,6 @@ LoaderSubtitle.Font = Enum.Font.Gotham
 LoaderSubtitle.TextXAlignment = Enum.TextXAlignment.Center
 LoaderSubtitle.Parent = LoaderFrame
 
--- Key Input Box
 local KeyInputBox = Instance.new("TextBox")
 KeyInputBox.Name = "KeyInputBox"
 KeyInputBox.Size = UDim2.new(1, -60, 0, 40)
@@ -103,7 +185,6 @@ KeyInputPadding.PaddingLeft = UDim.new(0, 15)
 KeyInputPadding.PaddingRight = UDim.new(0, 15)
 KeyInputPadding.Parent = KeyInputBox
 
--- Submit Button
 local SubmitButton = Instance.new("TextButton")
 SubmitButton.Name = "SubmitButton"
 SubmitButton.Size = UDim2.new(1, -60, 0, 40)
@@ -120,11 +201,10 @@ local SubmitCorner = Instance.new("UICorner")
 SubmitCorner.CornerRadius = UDim.new(0, 6)
 SubmitCorner.Parent = SubmitButton
 
--- Status Label
 local StatusLabel = Instance.new("TextLabel")
 StatusLabel.Name = "StatusLabel"
 StatusLabel.Size = UDim2.new(1, -40, 0, 25)
-StatusLabel.Position = UDim2.new(0, 20, 0, 230)
+StatusLabel.Position = UDim2.new(0, 20, 0, 225)
 StatusLabel.BackgroundTransparency = 1
 StatusLabel.Text = ""
 StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
@@ -142,16 +222,51 @@ SubmitButton.MouseLeave:Connect(function()
     SubmitButton.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
 end)
 
--- Function to load main script
 local function LoadMainScript()
-    StatusLabel.Text = "Key accepted! Loading..."
-    StatusLabel.TextColor3 = Color3.fromRGB(1, 164, 0)
+    StatusLabel.Text = "Key validated! Loading..."
+    StatusLabel.TextColor3 = Color3.fromRGB(100, 200, 100)
     wait(1)
     LoaderGui:Destroy()
-    -- Continue with main script below
 end
 
--- Submit button click handler
+SubmitButton.MouseLeave:Connect(function()
+    SubmitButton.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
+end)
+
+local function LoadMainScript()
+    StatusLabel.Text = "Key validated! Loading..."
+    StatusLabel.TextColor3 = Color3.fromRGB(100, 200, 100)
+    wait(1)
+    LoaderGui:Destroy()
+end
+
+local function ValidateKeyInput(key)
+    StatusLabel.Text = "Validating key..."
+    StatusLabel.TextColor3 = Color3.fromRGB(140, 140, 150)
+    
+    print("[FIRE.EXE] Validating key: " .. key:sub(1, 15) .. "...")
+    
+    local valid, message = ValidateKey(key)
+    
+    print("[FIRE.EXE] Validation result: " .. tostring(valid) .. " - " .. tostring(message))
+    
+    if valid then
+        StatusLabel.Text = "Key validated! " .. message
+        StatusLabel.TextColor3 = Color3.fromRGB(100, 200, 100)
+        SaveKey(key)
+        print("[FIRE.EXE] Key validated successfully!")
+        LoadMainScript()
+        return true
+    else
+        StatusLabel.Text = message or "Invalid key!"
+        StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+        KeyInputBox.Text = ""
+        print("[FIRE.EXE] Key validation failed: " .. tostring(message))
+        return false
+    end
+end
+
+-- Submit button handler
 SubmitButton.MouseButton1Click:Connect(function()
     local enteredKey = KeyInputBox.Text
     
@@ -161,13 +276,7 @@ SubmitButton.MouseButton1Click:Connect(function()
         return
     end
     
-    if isValidKey(enteredKey) then
-        LoadMainScript()
-    else
-        StatusLabel.Text = "Invalid key! Please try again"
-        StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-        KeyInputBox.Text = ""
-    end
+    ValidateKeyInput(enteredKey)
 end)
 
 -- Enter key to submit
@@ -177,8 +286,18 @@ KeyInputBox.FocusLost:Connect(function(enterPressed)
     end
 end)
 
+-- Try to load saved key (optional - just pre-fill, don't auto-validate)
+task.spawn(function()
+    local savedKey = LoadSavedKey()
+    if savedKey and savedKey ~= "" then
+        KeyInputBox.Text = savedKey
+        StatusLabel.Text = "Saved key loaded - press Submit"
+        StatusLabel.TextColor3 = Color3.fromRGB(140, 140, 150)
+    end
+end)
+
 -- Wait for key validation before continuing
-repeat wait() until LoaderGui.Parent == nil
+repeat task.wait() until LoaderGui.Parent == nil
 
 -- Main Script Starts Here
 
