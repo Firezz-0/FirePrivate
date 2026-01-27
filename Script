@@ -255,6 +255,15 @@ local function ValidateKeyInput(key)
         StatusLabel.Text = "Key validated! " .. message
         StatusLabel.TextColor3 = Color3.fromRGB(100, 200, 100)
         SaveKey(key)
+        
+        -- Store user info for menu display
+        _G.FIRE_UserInfo = {
+            username = LocalPlayer.Name,
+            userId = LocalPlayer.UserId,
+            keyExpiration = message,
+            daysLeft = message:match("(%d+) days") and tonumber(message:match("(%d+) days")) or -1
+        }
+        
         print("[FIRE.EXE] Key validated successfully!")
         LoadMainScript()
         return true
@@ -308,6 +317,14 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
+
+-- User Info (from key validation)
+_G.FIRE_UserInfo = _G.FIRE_UserInfo or {
+    username = LocalPlayer.Name,
+    userId = LocalPlayer.UserId,
+    keyExpiration = "Unknown",
+    daysLeft = -1
+}
 
 -- ESP Settings
 local ESPEnabled = true
@@ -467,7 +484,7 @@ ContentHeaderFix.Parent = ContentHeader
 
 local ContentHeaderText = Instance.new("TextLabel")
 ContentHeaderText.Name = "HeaderText"
-ContentHeaderText.Size = UDim2.new(1, -30, 1, 0)
+ContentHeaderText.Size = UDim2.new(0.5, -30, 1, 0)
 ContentHeaderText.Position = UDim2.new(0, 15, 0, 0)
 ContentHeaderText.BackgroundTransparency = 1
 ContentHeaderText.Text = "Visuals"
@@ -476,6 +493,64 @@ ContentHeaderText.TextSize = 16
 ContentHeaderText.Font = Enum.Font.Gotham
 ContentHeaderText.TextXAlignment = Enum.TextXAlignment.Left
 ContentHeaderText.Parent = ContentHeader
+
+-- User Profile Section (Top Right - No Background)
+local UserProfile = Instance.new("Frame")
+UserProfile.Name = "UserProfile"
+UserProfile.Size = UDim2.new(0, 200, 0, 40)
+UserProfile.Position = UDim2.new(1, -210, 0.5, -20)
+UserProfile.BackgroundTransparency = 1
+UserProfile.BorderSizePixel = 0
+UserProfile.Parent = ContentHeader
+
+-- User Info Container (Text on left)
+local UserInfoContainer = Instance.new("Frame")
+UserInfoContainer.Size = UDim2.new(1, -45, 1, 0)
+UserInfoContainer.Position = UDim2.new(0, 0, 0, 0)
+UserInfoContainer.BackgroundTransparency = 1
+UserInfoContainer.Parent = UserProfile
+
+-- Username
+local UsernameLabel = Instance.new("TextLabel")
+UsernameLabel.Name = "Username"
+UsernameLabel.Size = UDim2.new(1, 0, 0, 16)
+UsernameLabel.Position = UDim2.new(0, 0, 0, 4)
+UsernameLabel.BackgroundTransparency = 1
+UsernameLabel.Text = _G.FIRE_UserInfo.username
+UsernameLabel.TextColor3 = TEXT_WHITE
+UsernameLabel.TextSize = 13
+UsernameLabel.Font = Enum.Font.GothamBold
+UsernameLabel.TextXAlignment = Enum.TextXAlignment.Right
+UsernameLabel.TextTruncate = Enum.TextTruncate.AtEnd
+UsernameLabel.Parent = UserInfoContainer
+
+-- Key Expiration
+local ExpirationLabel = Instance.new("TextLabel")
+ExpirationLabel.Name = "Expiration"
+ExpirationLabel.Size = UDim2.new(1, 0, 0, 14)
+ExpirationLabel.Position = UDim2.new(0, 0, 0, 20)
+ExpirationLabel.BackgroundTransparency = 1
+ExpirationLabel.Text = _G.FIRE_UserInfo.keyExpiration
+ExpirationLabel.TextColor3 = _G.FIRE_UserInfo.daysLeft == -1 and Color3.fromRGB(100, 200, 100) or (_G.FIRE_UserInfo.daysLeft < 7 and ACCENT_COLOR or TEXT_GRAY)
+ExpirationLabel.TextSize = 11
+ExpirationLabel.Font = Enum.Font.Gotham
+ExpirationLabel.TextXAlignment = Enum.TextXAlignment.Right
+ExpirationLabel.TextTruncate = Enum.TextTruncate.AtEnd
+ExpirationLabel.Parent = UserInfoContainer
+
+-- User Avatar (On the right)
+local UserAvatar = Instance.new("ImageLabel")
+UserAvatar.Name = "Avatar"
+UserAvatar.Size = UDim2.new(0, 36, 0, 36)
+UserAvatar.Position = UDim2.new(1, -36, 0.5, -18)
+UserAvatar.BackgroundColor3 = BG_LIGHT
+UserAvatar.BorderSizePixel = 0
+UserAvatar.Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. LocalPlayer.UserId .. "&width=48&height=48&format=png"
+UserAvatar.Parent = UserProfile
+
+local AvatarCorner = Instance.new("UICorner")
+AvatarCorner.CornerRadius = UDim.new(1, 0)
+AvatarCorner.Parent = UserAvatar
 
 -- Content area
 local ContentContainer = Instance.new("Frame")
