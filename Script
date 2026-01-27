@@ -1,6 +1,7 @@
 -- Roblox ESP Script - FIRE.EXE
 -- Created for educational purposes
 
+do -- Wrap key system to limit scope
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -298,8 +299,15 @@ end)
 
 -- Wait for key validation before continuing
 repeat task.wait() until LoaderGui.Parent == nil
+end -- End key system scope
 
 -- Main Script Starts Here
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
 -- ESP Settings
 local ESPEnabled = true
