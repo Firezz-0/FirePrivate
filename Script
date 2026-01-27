@@ -345,6 +345,17 @@ local TeamCheckEnabled = true
 local NoclipEnabled = false
 local NoclipKeybind = Enum.KeyCode.V
 
+-- Bunny Hop Settings
+local BunnyHopEnabled = false
+local BunnyHopKeybind = Enum.KeyCode.Space
+local BunnyHopActive = false
+local BunnyHopMode = "Toggle"
+
+-- World Settings
+local NoSmokeEnabled = false
+local TracersEnabled = false
+local FullbrightEnabled = false
+
 -- Storage for ESP objects
 local ESPObjects = {}
 
@@ -470,7 +481,8 @@ ContentContainer.Parent = MainFrame
 local categories = {
     {name = "Player", icon = "👤", tabs = {
         {name = "Aimbot", icon = "🎯"},
-        {name = "Visuals", icon = "👁"}
+        {name = "Visuals", icon = "👁"},
+        {name = "Movement", icon = "🏃"}
     }},
     {name = "Miscellaneous", icon = "⚙", tabs = {
         {name = "Misc", icon = "🔧"},
@@ -1125,8 +1137,15 @@ local RadarRangeSlider = CreateSlider(RadarCard.Content, "Range (studs)", 100, 5
     RadarRange = value
 end)
 
--- ESP Colors Card (Left Column, Row 2)
-local ESPColorsCard = CreateCard(VisualsGridContainer, "ESP Colors", "🎨", 3)
+-- World Card (Left Column, Row 2)
+local WorldCard = CreateCard(VisualsGridContainer, "World", "🌍", 3)
+
+local ToggleNoSmoke = CreateToggle(WorldCard.Content, "No Smoke", false)
+local ToggleTracers = CreateToggle(WorldCard.Content, "Tracers", false)
+local ToggleFullbright = CreateToggle(WorldCard.Content, "Fullbright", false)
+
+-- ESP Colors Card (Right Column, Row 2)
+local ESPColorsCard = CreateCard(VisualsGridContainer, "ESP Colors", "🎨", 4)
 
 local BoxColorDropdown = CreateDropdown(ESPColorsCard.Content, "Box", colorNames, 1)
 local SkeletonColorDropdown = CreateDropdown(ESPColorsCard.Content, "Skeleton", colorNames, 2)
@@ -1266,11 +1285,11 @@ end)
 -- Container references for compatibility
 local AimbotOptionsContainer = AimbotCard.Content
 -- ═══════════════════════════════════════════════════════════════
--- MISC TAB - Card Layout
+-- MOVEMENT TAB - Card Layout
 -- ═══════════════════════════════════════════════════════════════
 
 -- Noclip Card
-local NoclipCard = CreateCard(tabFrames["MISC"], "Noclip", "�", 1)
+local NoclipCard = CreateCard(tabFrames["MOVEMENT"], "Noclip", "👻", 1)
 
 local NoclipToggle = CreateToggle(NoclipCard.Content, "Enable Noclip", false)
 local NoclipKeybindButton = CreateKeybindButton(NoclipCard.Content, "Keybind", "V", function(inputType, keyCode)
@@ -1279,8 +1298,113 @@ local NoclipKeybindButton = CreateKeybindButton(NoclipCard.Content, "Keybind", "
     end
 end)
 
+-- Bunny Hop Card
+local BunnyHopCard = CreateCard(tabFrames["MOVEMENT"], "Bunny Hop", "🐰", 2)
+
+local BunnyHopToggle = CreateToggle(BunnyHopCard.Content, "Enable Bunny Hop", false)
+
+-- Bunny Hop Mode Dropdown
+local BunnyHopModeRow = Instance.new("Frame")
+BunnyHopModeRow.Size = UDim2.new(1, 0, 0, 30)
+BunnyHopModeRow.BackgroundTransparency = 1
+BunnyHopModeRow.Parent = BunnyHopCard.Content
+
+local BunnyHopModeLabel = Instance.new("TextLabel")
+BunnyHopModeLabel.Size = UDim2.new(0.5, 0, 1, 0)
+BunnyHopModeLabel.BackgroundTransparency = 1
+BunnyHopModeLabel.Text = "Mode"
+BunnyHopModeLabel.TextColor3 = TEXT_GRAY
+BunnyHopModeLabel.TextSize = 13
+BunnyHopModeLabel.Font = Enum.Font.Gotham
+BunnyHopModeLabel.TextXAlignment = Enum.TextXAlignment.Left
+BunnyHopModeLabel.Parent = BunnyHopModeRow
+
+local BunnyHopModeButton = Instance.new("TextButton")
+BunnyHopModeButton.Size = UDim2.new(0.5, -5, 0, 26)
+BunnyHopModeButton.Position = UDim2.new(0.5, 5, 0.5, -13)
+BunnyHopModeButton.BackgroundColor3 = BG_LIGHT
+BunnyHopModeButton.BorderSizePixel = 0
+BunnyHopModeButton.Text = "Toggle"
+BunnyHopModeButton.TextColor3 = TEXT_GRAY
+BunnyHopModeButton.TextSize = 12
+BunnyHopModeButton.Font = Enum.Font.Gotham
+BunnyHopModeButton.Parent = BunnyHopModeRow
+
+local BunnyHopModeButtonCorner = Instance.new("UICorner")
+BunnyHopModeButtonCorner.CornerRadius = UDim.new(0, 4)
+BunnyHopModeButtonCorner.Parent = BunnyHopModeButton
+
+local BunnyHopModeArrow = Instance.new("TextLabel")
+BunnyHopModeArrow.Size = UDim2.new(0, 15, 1, 0)
+BunnyHopModeArrow.Position = UDim2.new(1, -20, 0, 0)
+BunnyHopModeArrow.BackgroundTransparency = 1
+BunnyHopModeArrow.Text = "▼"
+BunnyHopModeArrow.TextColor3 = ACCENT_COLOR
+BunnyHopModeArrow.TextSize = 8
+BunnyHopModeArrow.Font = Enum.Font.Gotham
+BunnyHopModeArrow.Parent = BunnyHopModeButton
+
+local BunnyHopModeOptions = Instance.new("Frame")
+BunnyHopModeOptions.Size = UDim2.new(1, 0, 0, 56)
+BunnyHopModeOptions.Position = UDim2.new(0, 0, 1, 4)
+BunnyHopModeOptions.BackgroundColor3 = BG_MEDIUM
+BunnyHopModeOptions.BorderSizePixel = 0
+BunnyHopModeOptions.Visible = false
+BunnyHopModeOptions.ZIndex = 10
+BunnyHopModeOptions.Parent = BunnyHopModeButton
+
+local BunnyHopModeOptionsCorner = Instance.new("UICorner")
+BunnyHopModeOptionsCorner.CornerRadius = UDim.new(0, 4)
+BunnyHopModeOptionsCorner.Parent = BunnyHopModeOptions
+
+local bunnyHopModes = {"Toggle", "Hold"}
+for i, mode in ipairs(bunnyHopModes) do
+    local ModeOption = Instance.new("TextButton")
+    ModeOption.Size = UDim2.new(1, 0, 0, 28)
+    ModeOption.Position = UDim2.new(0, 0, 0, (i-1) * 28)
+    ModeOption.BackgroundTransparency = 1
+    ModeOption.BorderSizePixel = 0
+    ModeOption.Text = mode
+    ModeOption.TextColor3 = TEXT_GRAY
+    ModeOption.TextSize = 12
+    ModeOption.Font = Enum.Font.Gotham
+    ModeOption.ZIndex = 11
+    ModeOption.Parent = BunnyHopModeOptions
+    
+    ModeOption.MouseEnter:Connect(function()
+        ModeOption.BackgroundTransparency = 0
+        ModeOption.BackgroundColor3 = BG_LIGHT
+    end)
+    
+    ModeOption.MouseLeave:Connect(function()
+        ModeOption.BackgroundTransparency = 1
+    end)
+    
+    ModeOption.MouseButton1Click:Connect(function()
+        BunnyHopMode = mode
+        BunnyHopModeButton.Text = mode
+        BunnyHopModeOptions.Visible = false
+        BunnyHopModeArrow.Text = "▼"
+    end)
+end
+
+BunnyHopModeButton.MouseButton1Click:Connect(function()
+    BunnyHopModeOptions.Visible = not BunnyHopModeOptions.Visible
+    BunnyHopModeArrow.Text = BunnyHopModeOptions.Visible and "▲" or "▼"
+end)
+
+local BunnyHopKeybindButton = CreateKeybindButton(BunnyHopCard.Content, "Keybind", "Space", function(inputType, keyCode)
+    if keyCode ~= Enum.KeyCode.Unknown then
+        BunnyHopKeybind = keyCode
+    end
+end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- MISC TAB - Card Layout
+-- ═══════════════════════════════════════════════════════════════
+
 -- Miscellaneous Card
-local MiscCard = CreateCard(tabFrames["MISC"], "Miscellaneous", "M", 3)
+local MiscCard = CreateCard(tabFrames["MISC"], "Miscellaneous", "M", 1)
 
 local NoRecoil = CreateToggle(MiscCard.Content, "No Recoil", false)
 local InfiniteAmmo = CreateToggle(MiscCard.Content, "Infinite Ammo", false)
@@ -1409,6 +1533,10 @@ local function UpdateHotkeyDisplay()
     
     if NoclipEnabled then
         table.insert(HotkeyItems, CreateHotkeyItem("Noclip", NoclipKeybind.Name))
+    end
+    
+    if BunnyHopEnabled then
+        table.insert(HotkeyItems, CreateHotkeyItem("Bunny Hop", "ON"))
     end
     
     if ESPEnabled then
@@ -1580,6 +1708,9 @@ local function RemoveESP(player)
             ESPObjects[player].HealthBar.Background:Remove()
             ESPObjects[player].HealthBar.Fill:Remove()
         end
+        if ESPObjects[player].Tracer then
+            ESPObjects[player].Tracer:Remove()
+        end
         ESPObjects[player] = nil
     end
 end
@@ -1588,12 +1719,20 @@ end
 local function AddESP(player)
     if player == LocalPlayer then return end
     
+    -- Create tracer line
+    local tracerLine = Drawing.new("Line")
+    tracerLine.Thickness = 1
+    tracerLine.Transparency = 1
+    tracerLine.Color = Color3.fromRGB(255, 255, 255)
+    tracerLine.Visible = false
+    
     ESPObjects[player] = {
         Box = CreateBoxESP(),
         Skeleton = CreateSkeletonESP(),
         Distance = CreateDistanceText(),
         Username = CreateUsernameText(),
-        HealthBar = CreateHealthBarESP()
+        HealthBar = CreateHealthBarESP(),
+        Tracer = tracerLine
     }
 end
 
@@ -1652,6 +1791,7 @@ local function HideESP(esp)
         esp.HealthBar.Background.Visible = false
         esp.HealthBar.Fill.Visible = false
     end
+    if esp.Tracer then esp.Tracer.Visible = false end
 end
 
 -- Update ESP for all players (Optimized + Bloxstrike Compatible)
@@ -1966,6 +2106,28 @@ local function UpdateESP()
                 esp.HealthBar.Fill.Visible = false
             end
         end
+        
+        -- Tracers - Line from bottom center of screen to enemy
+        if TracersEnabled and humanoidRootPart then
+            local rootPos, onScreen = Camera:WorldToViewportPoint(humanoidRootPart.Position)
+            
+            if onScreen and rootPos.Z > 0 then
+                local screenSize = Camera.ViewportSize
+                local fromPos = Vector2.new(screenSize.X / 2, screenSize.Y) -- Bottom center
+                local toPos = Vector2.new(rootPos.X, rootPos.Y)
+                
+                esp.Tracer.From = fromPos
+                esp.Tracer.To = toPos
+                esp.Tracer.Color = BoxESPColor -- Use same color as box
+                esp.Tracer.Visible = true
+            else
+                esp.Tracer.Visible = false
+            end
+        else
+            if esp.Tracer then
+                esp.Tracer.Visible = false
+            end
+        end
     end
 end
 
@@ -2257,6 +2419,41 @@ ToggleRadar.Checkbox.MouseButton1Click:Connect(function()
     end
 end)
 
+-- Toggle No Smoke
+ToggleNoSmoke.Checkbox.MouseButton1Click:Connect(function()
+    NoSmokeEnabled = not NoSmokeEnabled
+    AnimateToggle(ToggleNoSmoke, NoSmokeEnabled)
+end)
+
+-- Toggle Tracers
+ToggleTracers.Checkbox.MouseButton1Click:Connect(function()
+    TracersEnabled = not TracersEnabled
+    AnimateToggle(ToggleTracers, TracersEnabled)
+end)
+
+-- Toggle Fullbright
+ToggleFullbright.Checkbox.MouseButton1Click:Connect(function()
+    FullbrightEnabled = not FullbrightEnabled
+    AnimateToggle(ToggleFullbright, FullbrightEnabled)
+    
+    -- Apply fullbright immediately
+    local Lighting = game:GetService("Lighting")
+    if FullbrightEnabled then
+        Lighting.Brightness = 2
+        Lighting.ClockTime = 14
+        Lighting.FogEnd = 100000
+        Lighting.GlobalShadows = false
+        Lighting.OutdoorAmbient = Color3.fromRGB(128, 128, 128)
+    else
+        -- Restore default lighting
+        Lighting.Brightness = 1
+        Lighting.ClockTime = 14
+        Lighting.FogEnd = 100000
+        Lighting.GlobalShadows = true
+        Lighting.OutdoorAmbient = Color3.fromRGB(70, 70, 70)
+    end
+end)
+
 -- Toggle Noclip
 NoclipToggle.Checkbox.MouseButton1Click:Connect(function()
     NoclipEnabled = not NoclipEnabled
@@ -2269,6 +2466,21 @@ NoclipToggle.Checkbox.MouseButton1Click:Connect(function()
                 part.CanCollide = not NoclipEnabled
             end
         end
+    end
+    
+    if HotkeyDisplayEnabled then
+        UpdateHotkeyDisplay()
+    end
+end)
+
+-- Toggle Bunny Hop
+BunnyHopToggle.Checkbox.MouseButton1Click:Connect(function()
+    BunnyHopEnabled = not BunnyHopEnabled
+    AnimateToggle(BunnyHopToggle, BunnyHopEnabled)
+    
+    -- Reset active state when disabling
+    if not BunnyHopEnabled then
+        BunnyHopActive = false
     end
     
     if HotkeyDisplayEnabled then
@@ -2457,6 +2669,46 @@ Connections.NoclipLoop = RunService.Stepped:Connect(function()
     end
 end)
 
+-- Bunny Hop loop
+Connections.BunnyHopLoop = RunService.Heartbeat:Connect(function()
+    -- Must be enabled via checkbox AND activated via keybind
+    if BunnyHopEnabled and BunnyHopActive and LocalPlayer.Character then
+        local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+        local rootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        
+        if humanoid and rootPart and humanoid.Health > 0 then
+            -- Check if character is on ground
+            local rayOrigin = rootPart.Position
+            local rayDirection = Vector3.new(0, -4, 0)
+            local raycastParams = RaycastParams.new()
+            raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+            raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+            
+            local rayResult = workspace:Raycast(rayOrigin, rayDirection, raycastParams)
+            
+            -- If on ground, jump
+            if rayResult and humanoid:GetState() ~= Enum.HumanoidStateType.Freefall then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+            
+            -- Strafe to maintain speed (air strafe)
+            if humanoid:GetState() == Enum.HumanoidStateType.Freefall then
+                local moveDirection = humanoid.MoveDirection
+                if moveDirection.Magnitude > 0 then
+                    -- Apply slight velocity boost in movement direction
+                    local currentVelocity = rootPart.AssemblyLinearVelocity
+                    local strafeBoost = moveDirection * 0.5
+                    rootPart.AssemblyLinearVelocity = Vector3.new(
+                        currentVelocity.X + strafeBoost.X,
+                        currentVelocity.Y,
+                        currentVelocity.Z + strafeBoost.Z
+                    )
+                end
+            end
+        end
+    end
+end)
+
 -- Noclip keybind
 Connections.NoclipKeybind = UserInputService.InputBegan:Connect(function(input, gameProcessed)
     -- Don't check gameProcessed so noclip works while playing
@@ -2467,6 +2719,30 @@ Connections.NoclipKeybind = UserInputService.InputBegan:Connect(function(input, 
         if HotkeyDisplayEnabled then
             UpdateHotkeyDisplay()
         end
+    end
+end)
+
+-- Bunny Hop keybind
+Connections.BunnyHopKeybind = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    -- Only work if bunny hop is enabled via checkbox
+    if not BunnyHopEnabled then return end
+    
+    if input.KeyCode == BunnyHopKeybind then
+        if BunnyHopMode == "Toggle" then
+            -- Toggle mode: press to enable/disable (only if already enabled via checkbox)
+            BunnyHopActive = not BunnyHopActive
+        else
+            -- Hold mode: press to activate
+            BunnyHopActive = true
+        end
+    end
+end)
+
+-- Bunny Hop key release for hold mode
+Connections.BunnyHopKeybindRelease = UserInputService.InputEnded:Connect(function(input, gameProcessed)
+    if input.KeyCode == BunnyHopKeybind and BunnyHopMode == "Hold" then
+        -- Hold mode: release to deactivate
+        BunnyHopActive = false
     end
 end)
 
@@ -2781,6 +3057,11 @@ local function UpdateAimbot()
     end
 end
 
+-- Variables for auto-shoot
+local AimbotAutoShoot = false
+local AimbotLockStartTime = 0
+local AimbotLockDelay = 0.1 -- 100ms delay before shooting
+
 -- Handle aimbot keybind input
 Connections.AimbotKeybind = UserInputService.InputBegan:Connect(function(input, gameProcessed)
     -- Don't check gameProcessed for aimbot - we want it to work while playing
@@ -2789,6 +3070,7 @@ Connections.AimbotKeybind = UserInputService.InputBegan:Connect(function(input, 
     end
     
     local isAimbotKey = false
+    local isLeftClick = false
     
     -- Check if it's the aimbot key
     if AimbotKeyCode ~= Enum.KeyCode.Unknown then
@@ -2797,6 +3079,11 @@ Connections.AimbotKeybind = UserInputService.InputBegan:Connect(function(input, 
     else
         -- Mouse button was set (default MouseButton2)
         isAimbotKey = (input.UserInputType == AimbotKeybind)
+        -- Check if it's left click (MouseButton1)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            isLeftClick = true
+            isAimbotKey = (AimbotKeybind == Enum.UserInputType.MouseButton1)
+        end
     end
     
     if isAimbotKey then
@@ -2806,16 +3093,51 @@ Connections.AimbotKeybind = UserInputService.InputBegan:Connect(function(input, 
                 AimbotTarget = GetClosestPlayerToMouse()
                 if AimbotTarget then
                     AimbotLocked = true
+                    AimbotLockStartTime = tick()
+                    
+                    -- If using left click, enable auto-shoot after delay
+                    if isLeftClick then
+                        AimbotAutoShoot = true
+                        task.spawn(function()
+                            task.wait(AimbotLockDelay)
+                            -- Check if still locked and auto-shoot is enabled
+                            if AimbotLocked and AimbotAutoShoot and AimbotTarget then
+                                -- Simulate mouse click
+                                mouse1press()
+                                task.wait(0.05)
+                                mouse1release()
+                            end
+                            AimbotAutoShoot = false
+                        end)
+                    end
                 end
             else
                 AimbotTarget = nil
                 AimbotLocked = false
+                AimbotAutoShoot = false
             end
         else
             -- Hold mode: press to lock
             AimbotTarget = GetClosestPlayerToMouse()
             if AimbotTarget then
                 AimbotLocked = true
+                AimbotLockStartTime = tick()
+                
+                -- If using left click, enable auto-shoot after delay
+                if isLeftClick then
+                    AimbotAutoShoot = true
+                    task.spawn(function()
+                        task.wait(AimbotLockDelay)
+                        -- Check if still locked and auto-shoot is enabled
+                        if AimbotLocked and AimbotAutoShoot and AimbotTarget then
+                            -- Simulate mouse click
+                            mouse1press()
+                            task.wait(0.05)
+                            mouse1release()
+                        end
+                        AimbotAutoShoot = false
+                    end)
+                end
             end
         end
     end
@@ -2837,6 +3159,7 @@ Connections.AimbotKeybindRelease = UserInputService.InputEnded:Connect(function(
         -- Hold mode: release to unlock
         AimbotTarget = nil
         AimbotLocked = false
+        AimbotAutoShoot = false
     end
 end)
 
@@ -2844,6 +3167,33 @@ end)
 Connections.RenderStepped = RunService.RenderStepped:Connect(function()
     UpdateESP()
     UpdateAimbot()
+end)
+
+-- No Smoke monitoring (AC-safe method)
+Connections.NoSmokeMonitor = workspace.Debris.ChildAdded:Connect(function(obj)
+    if NoSmokeEnabled and obj.Name:match("VoxelSmoke") then
+        -- Wait a tiny bit for smoke to fully load
+        task.wait(0.1)
+        
+        -- Method 1: Move smoke far away
+        for _, part in pairs(obj:GetDescendants()) do
+            if part:IsA("BasePart") then
+                pcall(function()
+                    part.CFrame = part.CFrame - Vector3.new(0, 10000, 0)
+                end)
+            end
+        end
+        
+        -- Method 2: Make particles invisible
+        for _, emitter in pairs(obj:GetDescendants()) do
+            if emitter:IsA("ParticleEmitter") then
+                pcall(function()
+                    emitter.Rate = 0
+                    emitter.Transparency = NumberSequence.new(1)
+                end)
+            end
+        end
+    end
 end)
 
 -- Cleanup on script removal
